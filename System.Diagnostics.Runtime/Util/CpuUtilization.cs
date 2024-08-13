@@ -16,7 +16,7 @@ internal static class CpuUtilization
         // These may be 0 when we report CPU usage for the first time, in which case we should just return 0.
         var cpuUsage = _prevCpuInfo.lastRecordedCurrentTime != 0 && totalSystemTime != 0
             ? totalProcTime * 100.0 / totalSystemTime
-            : cpuUtilization;
+            : 0;
 
         _prevCpuInfo = cpuInfo;
 
