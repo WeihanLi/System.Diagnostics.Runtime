@@ -9,7 +9,7 @@ public static class NativeEvent
     {
         event Action<ContentionEndEvent> ContentionEnd;
         event Action<HeapStatsEvent> HeapStats;
-#if NETFRAMEWORK
+#if !NET7_0_OR_GREATER
         event Action<PauseCompleteEvent> PauseComplete;
 #endif
         event Action<CollectionStartEvent> CollectionStart;

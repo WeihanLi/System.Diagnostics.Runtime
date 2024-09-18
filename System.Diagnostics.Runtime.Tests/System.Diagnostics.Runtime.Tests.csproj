@@ -3,8 +3,9 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyOriginatorKeyFile>..\Key.snk</AssemblyOriginatorKeyFile>
+    <RollForward>Major</RollForward>
     <SignAssembly>True</SignAssembly>
-    <TargetFrameworks>net8.0;net471</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net471</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

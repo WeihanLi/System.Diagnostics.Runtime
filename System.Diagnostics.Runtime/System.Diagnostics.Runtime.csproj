@@ -11,9 +11,9 @@
     <PackageTags>opentelemetry metrics prometheus counter guage</PackageTags>
     <RepositoryUrl>https://github.com/pengweiqhca/System.Diagnostics.Runtime</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <TargetFrameworks>net6.0;net471</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net9.0;net471</TargetFrameworks>
     <SignAssembly>True</SignAssembly>
-    <Version>2.0.1</Version>
+    <Version>2.1.0</Version>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
 
@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTelemetry.Instrumentation.Process" Version="0.*-*" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" Condition="'$(TargetFramework)' != 'net9.0'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">

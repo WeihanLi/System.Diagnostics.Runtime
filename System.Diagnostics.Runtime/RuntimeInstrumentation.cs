@@ -171,7 +171,7 @@ internal class RuntimeInstrumentation : IDisposable
             "The total available memory, in bytes, for the garbage collector to use when the last garbage collection occurred.");
 #endif
         if (nativeEvent == null) return;
-#if NETFRAMEWORK
+#if !NET7_0_OR_GREATER
         var gcPauseDuration = 0L;
         meter.CreateObservableCounter($"{options.MetricPrefix}gc.duration",
             () => gcPauseDuration == default ? [] : new[] { new Measurement<long>(Interlocked.Read(ref gcPauseDuration) * 100) },

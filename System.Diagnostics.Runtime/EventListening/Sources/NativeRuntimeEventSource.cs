@@ -229,11 +229,11 @@ public class NativeRuntimeEventSource
     {
         public const int GcStart = 1;
         public const int GcEnd = 2;
-#if NETFRAMEWORK
+#if !NET7_0_OR_GREATER
         public const int RestartEEEnd = 3;
 #endif
         public const int HeapStats = 4;
-#if NETFRAMEWORK
+#if !NET7_0_OR_GREATER
         public const int SuspendEE = 9;
 #endif
         public const int AllocTick = 10;
@@ -251,6 +251,8 @@ public class NativeRuntimeEventSource
         public const int WorkerThreadWait = 57;
         public const int ContentionStart = 81;
         public const int ContentionStop = 91;
+#if NETFRAMEWORK
         public const int PerHeapHistory = 204;
+#endif
     }
 }

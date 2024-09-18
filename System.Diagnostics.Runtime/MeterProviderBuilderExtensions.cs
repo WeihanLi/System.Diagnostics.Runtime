@@ -30,6 +30,10 @@ public static class MeterProviderBuilderExtensions
         builder.AddMeter(RuntimeInstrumentation.InstrumentationName);
 
         return builder.AddInstrumentation(() => instrumentation).AddProcessInstrumentation()
+#if NET9_0_OR_GREATER
+            .AddMeter("System.Runtime");
+#else
             .AddRuntimeInstrumentation();
+#endif
     }
 }
