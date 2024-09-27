@@ -176,6 +176,23 @@ internal class RuntimeInstrumentation : IDisposable
         meter.CreateObservableUpDownCounter($"{options.MetricPrefix}gc.available_memory.size",
             () => GC.GetGCMemoryInfo().TotalAvailableMemoryBytes, "bytes",
             "The total available memory, in bytes, for the garbage collector to use when the last garbage collection occurred.");
+#if NET9_0_OR_GREATER
+        meter.CreateObservableUpDownCounter($"{options.MetricPrefix}gc.heap.fragmentation.size", () =>
+            {
+                if (!IsGcInfoAvailable) return Array.Empty<Measurement<long>>();
+
+                var generationInfo = GC.GetGCMemoryInfo().GenerationInfo;
+                var measurements = new Measurement<long>[generationInfo.Length];
+                var maxSupportedLength = Math.Min(generationInfo.Length, GenNames.Length);
+
+                for (var index = 0; index < maxSupportedLength; ++index)
+                    measurements[index] = new(generationInfo[index].FragmentationAfterBytes,
+                        new KeyValuePair<string, object?>("gc.heap.generation", GenNames[index]));
+
+                return measurements;
+            }, "bytes",
+            "The heap fragmentation, as observed during the latest garbage collection. The value will be unavailable until at least one garbage collection has occurred.");
+#endif
 #endif
         if (nativeEvent == null) return;
 #if !NET7_0_OR_GREATER
@@ -238,25 +255,7 @@ internal class RuntimeInstrumentation : IDisposable
 
                 for (var index = 0; index < maxSupportedLength; ++index)
                     measurements[index] = new(fragmentedBytes[index],
-                        new KeyValuePair<string, object?>("generation", GenNames[index]));
-
-                return measurements;
-            }, "bytes",
-            "The heap fragmentation, as observed during the latest garbage collection. The value will be unavailable until at least one garbage collection has occurred.");
-#elif NET9_0_OR_GREATER
-        meter.CreateObservableUpDownCounter($"{options.MetricPrefix}gc.heap.fragmentation.size", () =>
-            {
-                if (!IsGcInfoAvailable) return Array.Empty<Measurement<long>>();
-
-                var generationInfo = GC.GetGCMemoryInfo().GenerationInfo;
-                var measurements = new Measurement<long>[generationInfo.Length];
-                var maxSupportedLength = Math.Min(generationInfo.Length, GenNames.Length);
-
-                for (var index = 0; index < maxSupportedLength; ++index)
-                {
-                    measurements[index] = new(generationInfo[index].FragmentationAfterBytes,
-                        new KeyValuePair<string, object?>("generation", GenNames[index]));
-                }
+                        new KeyValuePair<string, object?>("gc.heap.generation", GenNames[index]));
 
                 return measurements;
             }, "bytes",
