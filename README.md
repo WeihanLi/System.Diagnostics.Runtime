@@ -12,7 +12,7 @@ These metrics are essential for understanding the performance of any non-trivial
 
 ## Using this package
 ### Requirements
-- .NET core 3.1 (runtime version 3.1.11+ is recommended)/ .NET 6.0/ .NET Framework 4.7.1
+- .NET 6.0/ .NET Framework 4.7.1
 - The [PW.Diagnostics.Runtime](https://github.com/pengweiqhca/System.Diagnostics.Runtime) package
 
 ### Install it
