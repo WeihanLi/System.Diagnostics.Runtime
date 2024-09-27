@@ -151,8 +151,8 @@ internal class Given_Native_Runtime_Are_Available_For_GcStats : IntegrationTestB
             {
                 // allocate roughly 100kb+ of small objects
                 for (var i = 0; i < 11; i++) _ = new byte[10_000];
-            }, measurements => Assert.That(() => measurements.Sum($"{Options.MetricPrefix}gc.heap_allocations.size", "heap", "soh"), Is.GreaterThanOrEqualTo(100_000).After(2_000, 10)),
-            $"{Options.MetricPrefix}gc.heap_allocations.size");
+            }, measurements => Assert.That(() => measurements.Sum($"{Options.MetricPrefix}gc.allocations.size", "heap", "soh"), Is.GreaterThanOrEqualTo(100_000).After(2_000, 10)),
+            $"{Options.MetricPrefix}gc.allocations.size");
 
     [Test]
     public Task When_a_100kb_large_object_is_allocated_then_the_allocated_bytes_counter_is_increased() =>
@@ -160,8 +160,8 @@ internal class Given_Native_Runtime_Are_Available_For_GcStats : IntegrationTestB
             {
                 // allocate roughly 100kb+ of small objects
                 for (var i = 0; i < 11; i++) _ = new byte[100_000];
-            }, measurements => Assert.That(() => measurements.Sum($"{Options.MetricPrefix}gc.heap_allocations.size", "heap", "loh"), Is.GreaterThanOrEqualTo(100_0000).After(2_000, 10)),
-            $"{Options.MetricPrefix}gc.heap_allocations.size");
+            }, measurements => Assert.That(() => measurements.Sum($"{Options.MetricPrefix}gc.allocations.size", "heap", "loh"), Is.GreaterThanOrEqualTo(100_0000).After(2_000, 10)),
+            $"{Options.MetricPrefix}gc.allocations.size");
 
     private class FinalizableTest
     {

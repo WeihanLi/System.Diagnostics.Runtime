@@ -26,8 +26,8 @@ internal class Given_Exception_Events_Are_Enabled_For_Exception_Stats : Integrat
                     {
                     }
             }, measurements =>
-                Assert.That(() => measurements.Sum($"{Options.MetricPrefix}exception_types.count", "type", "System.DivideByZeroException"),
+                Assert.That(() => measurements.Sum($"{Options.MetricPrefix}exceptions.count", "type", "System.DivideByZeroException"),
                     Is.GreaterThanOrEqualTo(numToThrow).After(5000, 10)),
-            $"{Options.MetricPrefix}exception_types.count");
+            $"{Options.MetricPrefix}exceptions.count");
     }
 }

@@ -20,9 +20,15 @@ internal class RuntimeInstrumentation : IDisposable
         LabelHeap = "heap",
         LabelGeneration = "generation";
 
-    private static readonly Dictionary<NativeRuntimeEventSource.ThreadAdjustmentReason, string> AdjustmentReasonToLabel = LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.ThreadAdjustmentReason>();
-    private static readonly Dictionary<NativeRuntimeEventSource.GCType, string> GcTypeToLabels = LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.GCType>();
-    private static readonly Dictionary<NativeRuntimeEventSource.GCReason, string> GcReasonToLabels = LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.GCReason>();
+    private static readonly Dictionary<NativeRuntimeEventSource.ThreadAdjustmentReason, string>
+        AdjustmentReasonToLabel =
+            LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.ThreadAdjustmentReason>();
+
+    private static readonly Dictionary<NativeRuntimeEventSource.GCType, string> GcTypeToLabels =
+        LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.GCType>();
+
+    private static readonly Dictionary<NativeRuntimeEventSource.GCReason, string> GcReasonToLabels =
+        LabelGenerator.MapEnumToLabelValues<NativeRuntimeEventSource.GCReason>();
 
     private static readonly string[] GenNames = ["gen0", "gen1", "gen2", "loh", "poh"];
     private static readonly AssemblyName AssemblyName = typeof(RuntimeInstrumentation).Assembly.GetName();
@@ -73,8 +79,9 @@ internal class RuntimeInstrumentation : IDisposable
 #else
             ContentionInstrumentation(meter, options, CreateNativeRuntimeEventParser());
 #endif
-
+#if !NET9_0_OR_GREATER
         if (options.IsExceptionsEnabled) disposables.Add(ExceptionsInstrumentation(meter, options));
+#endif
         if (options.IsGcEnabled)
 #if NETFRAMEWORK
             GcInstrumentation(meter, options, CreateEtwParser());
@@ -133,11 +140,12 @@ internal class RuntimeInstrumentation : IDisposable
 #endif
         };
     }
-
+#if !NET9_0_OR_GREATER
     private static IDisposable ExceptionsInstrumentation(Meter meter, RuntimeMetricsOptions options)
     {
-        var exceptionTypesCounter = meter.CreateCounter<long>($"{options.MetricPrefix}exception_types.count",
-            description: "Count of exception types that have been thrown in managed code, since the observation started. The value will be unavailable until an exception has been thrown after System.Diagnostics.Runtime initialization.");
+        var exceptionTypesCounter = meter.CreateCounter<long>($"{options.MetricPrefix}exceptions.count",
+            description:
+            "Count of exception types that have been thrown in managed code, since the observation started. The value will be unavailable until an exception has been thrown after System.Diagnostics.Runtime initialization.");
 
         // ReSharper disable once ConvertToLocalFunction
         EventHandler<FirstChanceExceptionEventArgs> firstChanceException = (_, args) =>
@@ -160,7 +168,7 @@ internal class RuntimeInstrumentation : IDisposable
 
         return new DisposableAction(() => AppDomain.CurrentDomain.FirstChanceException -= firstChanceException);
     }
-
+#endif
     private static void GcInstrumentation(Meter meter, RuntimeMetricsOptions options,
         NativeEvent.INativeEvent? nativeEvent)
     {
@@ -186,7 +194,8 @@ internal class RuntimeInstrumentation : IDisposable
         nativeEvent.CollectionComplete += e => Interlocked.Add(ref gcDuration, e.Duration.Ticks);
 
         var gcCollections = meter.CreateCounter<int>($"{options.MetricPrefix}gc.reasons.count",
-            description: "Count the number of garbage collection reasons that have occurred since the observation started. The value will be unavailable until GC has been collection after System.Diagnostics.Runtime initialization.");
+            description:
+            "Count the number of garbage collection reasons that have occurred since the observation started. The value will be unavailable until GC has been collection after System.Diagnostics.Runtime initialization.");
 
         nativeEvent.CollectionStart += e =>
         {
@@ -234,11 +243,29 @@ internal class RuntimeInstrumentation : IDisposable
                 return measurements;
             }, "bytes",
             "The heap fragmentation, as observed during the latest garbage collection. The value will be unavailable until at least one garbage collection has occurred.");
+#elif NET9_0_OR_GREATER
+        meter.CreateObservableUpDownCounter($"{options.MetricPrefix}gc.heap.fragmentation.size", () =>
+            {
+                if (!IsGcInfoAvailable) return Array.Empty<Measurement<long>>();
+
+                var generationInfo = GC.GetGCMemoryInfo().GenerationInfo;
+                var measurements = new Measurement<long>[generationInfo.Length];
+                var maxSupportedLength = Math.Min(generationInfo.Length, GenNames.Length);
+
+                for (var index = 0; index < maxSupportedLength; ++index)
+                {
+                    measurements[index] = new(generationInfo[index].FragmentationAfterBytes,
+                        new KeyValuePair<string, object?>("generation", GenNames[index]));
+                }
+
+                return measurements;
+            }, "bytes",
+            "The heap fragmentation, as observed during the latest garbage collection. The value will be unavailable until at least one garbage collection has occurred.");
 #endif
         var loh = 0L;
         var soh = 0L;
 
-        meter.CreateObservableCounter($"{options.MetricPrefix}gc.heap_allocations.size", () =>
+        meter.CreateObservableCounter($"{options.MetricPrefix}gc.allocations.size", () =>
             {
                 var list = new List<Measurement<long>>();
 
@@ -302,7 +329,8 @@ internal class RuntimeInstrumentation : IDisposable
         if (nativeEvent == null) return;
 
         var adjustmentsTotal = meter.CreateCounter<int>($"{options.MetricPrefix}thread_pool.adjustments.count",
-            description: "The total number of changes made to the size of the thread pool, labeled by the reason for change");
+            description:
+            "The total number of changes made to the size of the thread pool, labeled by the reason for change");
 #if NETFRAMEWORK
         var threadCount = -1;
 
@@ -352,9 +380,30 @@ internal class RuntimeInstrumentation : IDisposable
         foreach (var disposable in _disposables)
             disposable.Dispose();
     }
+#if NET9_0_OR_GREATER
+    private static bool _isGcInfoAvailable;
 
+    private static bool IsGcInfoAvailable
+    {
+        get
+        {
+            if (_isGcInfoAvailable)
+            {
+                return true;
+            }
+
+            if (GC.CollectionCount(0) > 0)
+            {
+                _isGcInfoAvailable = true;
+            }
+
+            return _isGcInfoAvailable;
+        }
+    }
+#else
     private class DisposableAction(Action action) : IDisposable
     {
         public void Dispose() => Interlocked.Exchange(ref action!, null)?.Invoke();
     }
+#endif
 }

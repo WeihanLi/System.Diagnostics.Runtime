@@ -89,16 +89,20 @@ public static class InstrumentTest
     {
         var debugMeasurements = new List<MeasurementValue>();
 
+        var instruments = new HashSet<string>();
+
         using var listener = new MeterListener
         {
             InstrumentPublished = (instrument, meterListener) =>
             {
-                if (names.Contains(instrument.Name))
+                if (names.Remove(instrument.Name))
                 {
-                    names.Remove(instrument.Name);
+                    instruments.Add(instrument.Name);
 
                     meterListener.EnableMeasurementEvents(instrument);
                 }
+                else if (instruments.Contains(instrument.Name))
+                    meterListener.EnableMeasurementEvents(instrument);
                 else if (DebugMetrics.Contains(instrument.Name))
                     meterListener.EnableMeasurementEvents(instrument);
             }

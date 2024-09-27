@@ -13,7 +13,7 @@
     <RepositoryType>git</RepositoryType>
     <TargetFrameworks>net6.0;net7.0;net9.0;net471</TargetFrameworks>
     <SignAssembly>True</SignAssembly>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
 
