@@ -37,7 +37,7 @@ public static class NativeEvent
             LohSizeBytes = (long)(ulong)e.Payload![6]!;
             FinalizationQueueLength = (long)(ulong)e.Payload![9]!;
             NumPinnedObjects = (int)(uint)e.Payload![10]!;
-#if NET
+#if !NETFRAMEWORK
             PohSizeBytes = (long)(ulong)e.Payload![14]!;
 #endif
         }
@@ -63,7 +63,7 @@ public static class NativeEvent
         public long FinalizationQueueLength { get; }
 
         public int NumPinnedObjects { get; }
-#if NET
+#if !NETFRAMEWORK
         public long PohSizeBytes { get; }
 #endif
     }

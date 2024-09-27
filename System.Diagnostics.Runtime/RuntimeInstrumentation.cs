@@ -35,20 +35,7 @@ internal class RuntimeInstrumentation : IDisposable
         var meter = new Meter(InstrumentationName, InstrumentationVersion);
 
         var disposables = new List<IDisposable> { meter };
-
-#if NET
-        NativeRuntimeEventParser? nativeRuntimeParser = null;
-
-        NativeRuntimeEventParser? CreateNativeRuntimeEventParser()
-        {
-            if (!options.EnabledNativeRuntime) return null;
-
-            if (nativeRuntimeParser == null)
-                disposables.Add(new DotNetEventListener(nativeRuntimeParser = new(), EventLevel.Verbose));
-
-            return nativeRuntimeParser;
-        }
-#else
+#if NETFRAMEWORK
         EtwParser? etwParser = null;
 
         EtwParser? CreateEtwParser()
@@ -67,6 +54,18 @@ internal class RuntimeInstrumentation : IDisposable
 
             return etwParser;
         }
+#else
+        NativeRuntimeEventParser? nativeRuntimeParser = null;
+
+        NativeRuntimeEventParser? CreateNativeRuntimeEventParser()
+        {
+            if (!options.EnabledNativeRuntime) return null;
+
+            if (nativeRuntimeParser == null)
+                disposables.Add(new DotNetEventListener(nativeRuntimeParser = new(), EventLevel.Verbose));
+
+            return nativeRuntimeParser;
+        }
 #endif
         if (options.IsContentionEnabled)
 #if NETFRAMEWORK
@@ -77,10 +76,10 @@ internal class RuntimeInstrumentation : IDisposable
 
         if (options.IsExceptionsEnabled) disposables.Add(ExceptionsInstrumentation(meter, options));
         if (options.IsGcEnabled)
-#if NET
-            GcInstrumentation(meter, options, CreateNativeRuntimeEventParser());
-#else
+#if NETFRAMEWORK
             GcInstrumentation(meter, options, CreateEtwParser());
+#else
+            GcInstrumentation(meter, options, CreateNativeRuntimeEventParser());
 #endif
         if (options.IsProcessEnabled) ProcessInstrumentation(meter);
 
@@ -165,7 +164,7 @@ internal class RuntimeInstrumentation : IDisposable
     private static void GcInstrumentation(Meter meter, RuntimeMetricsOptions options,
         NativeEvent.INativeEvent? nativeEvent)
     {
-#if NET
+#if !NETFRAMEWORK
         meter.CreateObservableUpDownCounter($"{options.MetricPrefix}gc.available_memory.size",
             () => GC.GetGCMemoryInfo().TotalAvailableMemoryBytes, "bytes",
             "The total available memory, in bytes, for the garbage collector to use when the last garbage collection occurred.");

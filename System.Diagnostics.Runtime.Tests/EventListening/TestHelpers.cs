@@ -24,7 +24,7 @@ public class TestHelpers
                 [typeof(EventSource), typeof(int)], Flags.NonPublic | Flags.Instance, null, eventId);
 
         args.SetPropertyValue(nameof(args.Payload), new ReadOnlyCollection<object>(payload));
-#if NET
+#if !NETFRAMEWORK
         if (timestamp.HasValue)
             args.SetPropertyValue(nameof(args.TimeStamp), timestamp.Value);
 #endif

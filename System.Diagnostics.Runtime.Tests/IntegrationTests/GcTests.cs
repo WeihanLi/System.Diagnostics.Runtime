@@ -5,16 +5,16 @@ namespace System.Diagnostics.Runtime.Tests.IntegrationTests;
 internal class Given_Are_Available_For_GcStats : IntegrationTestBase
 {
     protected override RuntimeMetricsOptions GetOptions() => new() { GcEnabled = true };
-#if NET
-    [Test]
-    public Task Computer_memory_available() =>
-        InstrumentTest.Assert(measurements => Assert.That(() => measurements.LastValue($"{Options.MetricPrefix}gc.available_memory.size"),
-            Is.GreaterThan(0.0).After(2000, 10)), $"{Options.MetricPrefix}gc.available_memory.size");
-#else
+#if NETFRAMEWORK
     [Test]
     public Task When_a_garbage_collection_is_performed_then_the_heap_sizes_are_updated() =>
         InstrumentTest.Assert(measurements => Assert.That(() => measurements.LastValue($"{Options.MetricPrefix}gc.objects.size"),
             Is.GreaterThan(0.0).After(2000, 10)), $"{Options.MetricPrefix}gc.objects.size");
+#else
+    [Test]
+    public Task Computer_memory_available() =>
+        InstrumentTest.Assert(measurements => Assert.That(() => measurements.LastValue($"{Options.MetricPrefix}gc.available_memory.size"),
+            Is.GreaterThan(0.0).After(2000, 10)), $"{Options.MetricPrefix}gc.available_memory.size");
 #endif
     [Test]
     public Task When_collections_happen_then_the_collection_count_is_increased([Values(0, 1, 2)] int generation)

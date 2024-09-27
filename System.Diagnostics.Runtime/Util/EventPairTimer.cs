@@ -34,10 +34,10 @@ public class EventPairTimer<TId, TEventData>(
 
         if (e.EventId == startEventId)
         {
-#if NET
-            _eventStartedAtCache.Set(extractEventIdFn(e), startEventData = extractData(e), e.TimeStamp);
-#else
+#if NETFRAMEWORK
             _eventStartedAtCache.Set(extractEventIdFn(e), startEventData = extractData(e), DateTime.Now);
+#else
+            _eventStartedAtCache.Set(extractEventIdFn(e), startEventData = extractData(e), e.TimeStamp);
 #endif
             return DurationResult.Start;
         }
@@ -46,10 +46,10 @@ public class EventPairTimer<TId, TEventData>(
 
         if (!_eventStartedAtCache.TryRemove(extractEventIdFn(e), out startEventData, out var timeStamp))
             return DurationResult.FinalWithoutDuration;
-#if NET
-        duration = e.TimeStamp - timeStamp;
-#else
+#if NETFRAMEWORK
         duration = DateTime.Now - timeStamp;
+#else
+        duration = e.TimeStamp - timeStamp;
 #endif
         return DurationResult.FinalWithDuration;
     }
